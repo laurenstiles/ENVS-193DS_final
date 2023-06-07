@@ -32,6 +32,8 @@ library(tidyverse)
 library(here) 
 library(janitor) 
 library(readxl)
+library(naniar)
+library(car)
 ```
 
 ## **Problem 1**
@@ -42,12 +44,11 @@ library(readxl)
 
 # Methods 
 data available [here](https://portal.edirepository.org/nis/mapbrowse?packageid=knb-lter-sev.208.102459)
-We read in the data and cleaned it by selecting the columns we are interested in and renaming the locations for more straightforward interpretation. We chose to use an ANOVA test to compare the count sample means since this kind of test can compare means between more than two groups. We tested the null hypothesis that each of mean seed counts from the different mound locations are each the same. The alternative hypothesis is that at least one of the means is different than the other sample means. We tested the assumption that the samples are independent, that they had a normal distribution, and that they had equal variances. #EDIT THIS A LOT MORE 
+We read in the data and cleaned it by selecting the columns we are interested in and renaming the locations (base of mound, edge of grass, grass interspace) for more straightforward interpretation. We chose to use an ANOVA test to compare the count sample means since this kind of test can compare means between more than two groups. We tested the null hypothesis that each of mean seed counts from the different mound locations are all the same. The alternative hypothesis is that at least one of the means is different than the other sample means. We tested the assumption that the samples have a normal distribution and equal variances. The qqplot shows that the data is mostly normal, since most of the facets represent the data as a straight line. There are deviations from normality from the data in each, especially in the base of mound group. But, ANOVA is robust even when this assumption is not met, so we decided to continue with the analysis. We used a Levene test to determine whether the data has equal variances. The null hypothesis of this test is that the variances are equal and the alternative hypothesis is that the variances are not equal. The p value from this test is <0.05, so we reject the null. It does not seem like the variances are equal. Again, since ANOVA is robust, we continued with this test.  #EDIT THIS A LOT MORE 
 
 Read in data: 
 ```{r message = FALSE, warning = FALSE}
 seed_dat <- read_csv(here("data/sev208_kratseedbank_20120213.csv"))
-
 ```
 
 Clean data: 
@@ -59,19 +60,35 @@ seed_dat_clean <- seed_dat |>
                   #remove "D" from loc column becuase there is no data defintion on the EDI portal 
                   filter(loc != "D") |>
                   #rename columns 
-                  mutate(loc = case_when(loc == "B" ~ "Base of Mound", 
+                  mutate(loc = case_when(loc == "B" ~ "Base of mound", 
                                           loc == "E" ~ "Edge of grass", 
                                           loc == "I" ~ "Grass interspace"))  
 ```
 
 
 Check Assumptions: 
-```{r}
+```{r warning = FALSE, message = FALSE}
+#first, checking for missing data 
+gg_miss_var(seed_dat_clean) #no missing data 
 
+#check for normal distribution
+ggplot(data = seed_dat_clean, aes(sample = seeds)) + 
+  #qqplot with dots 
+  stat_qq() + 
+  #add line to qqplot
+  stat_qq_line(color = "red") + 
+  #split plot into calcium-treated and reference watersheds 
+  facet_wrap(~loc) 
+#looks more or less normally distributed -- pretty linear 
+
+#check for equal variance of seed count data using a Levene test
+seed_var_test <-  leveneTest(seeds ~ loc, data = seed_dat_clean, var.equal = TRUE)
+seed_var_test
 ```
 
 Run ANOVA: 
 ```{r}
+aov(seeds ~ loc, data = seed_dat_clean)
 
 ```
 
