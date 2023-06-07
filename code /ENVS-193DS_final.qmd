@@ -88,7 +88,8 @@ seed_var_test
 
 Run ANOVA: 
 ```{r}
-aov(seeds ~ loc, data = seed_dat_clean)
+seeds_aov <- aov(seeds ~ loc, data = seed_dat_clean)
+summary(seeds_aov)
 
 ```
 
@@ -101,6 +102,10 @@ Table:
 ```{r}
 
 ```
+
+#Results -- need f statistic -- should be 31.30, right now is 18.something...
+
+
 
 ## **Bibliography**
 Koontz, T. and H. Simpson. 2013. Effects of Kangaroo Rat Mounds on Seed Banks of Grass
