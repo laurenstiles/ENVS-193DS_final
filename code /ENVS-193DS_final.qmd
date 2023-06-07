@@ -1,0 +1,96 @@
+---
+title: "ENVS-193DS_final"
+author: "Lauren Stiles"
+date: 06--2023
+format:
+  html:
+    toc: true
+    toc-location: left
+    code-fold: true
+    theme: yeti
+execute: 
+  message: false
+  warning: false 
+---
+
+# notes about what to include -- 1. Context: for example, in biological terms, what is the question? Hypothesis/hypotheses?
+What are the main results? What is your interpretation of those results?
+2. Logic: for example, how did you process the data? What steps did you go through to get
+your result? What assumptions did you check, and how? What test did you run and why?
+What tools (e.g. packages, functions) did you use?
+3. Transparency: for example, are your code and data organized?Is your code annotated and
+spaced out?Is it publicly available? Did you write an informative README?
+4. Clarity: for example, is your writing conveying your thoughts appropriately?Is your
+document clean and organized? Are sections clear?
+5. Communication: for example, are your figures and tables clear? Have you used colors,
+shapes, or other aesthetics to create a clean, visually appealing plot? Have you used the
+appropriate plot for your data set and analysis? Have you rounded/summarized numbers
+to the appropriate number of digits?
+#load libraries: 
+```{r message = FALSE, warning = FALSE}
+library(tidyverse)
+library(here) 
+library(janitor) 
+library(readxl)
+```
+
+## **Problem 1**
+
+# Question: How does total seed number differ between kangaroo rat mound locations?
+
+# Introduction: 3-5 citations/sentences #DO THIS 
+
+# Methods 
+data available [here](https://portal.edirepository.org/nis/mapbrowse?packageid=knb-lter-sev.208.102459)
+We read in the data and cleaned it by selecting the columns we are interested in and renaming the locations for more straightforward interpretation. We chose to use an ANOVA test to compare the count sample means since this kind of test can compare means between more than two groups. We tested the null hypothesis that each of mean seed counts from the different mound locations are each the same. The alternative hypothesis is that at least one of the means is different than the other sample means. We tested the assumption that the samples are independent, that they had a normal distribution, and that they had equal variances. #EDIT THIS A LOT MORE 
+
+Read in data: 
+```{r message = FALSE, warning = FALSE}
+seed_dat <- read_csv(here("data/sev208_kratseedbank_20120213.csv"))
+
+```
+
+Clean data: 
+```{r}
+#create new data frame with kangaroo rat mound locations and seed numbers found 
+seed_dat_clean <- seed_dat |> 
+                  #select columns of interest
+                  select(mnd, loc, seeds) |> 
+                  #remove "D" from loc column becuase there is no data defintion on the EDI portal 
+                  filter(loc != "D") |>
+                  #rename columns 
+                  mutate(loc = case_when(loc == "B" ~ "Base of Mound", 
+                                          loc == "E" ~ "Edge of grass", 
+                                          loc == "I" ~ "Grass interspace"))  
+```
+
+
+Check Assumptions: 
+```{r}
+
+```
+
+Run ANOVA: 
+```{r}
+
+```
+
+Visualization: 
+```{r}
+
+```
+
+Table: 
+```{r}
+
+```
+
+## **Bibliography**
+Koontz, T. and H. Simpson. 2013. Effects of Kangaroo Rat Mounds on Seed Banks of Grass
+and Shrublands at the Sevilleta National Wildlife Refuge, New Mexico (2001) ver 102459.
+Environmental Data Initiative.
+
+Koontz and Simpson 2010, “The composition of seed banks on kangaroo rat
+(Dipodomysspectabilis) mounds in a Chihuahuan Desert grassland.” Journal of Arid Environments.
+https://doi.org/10.1016/j.jaridenv.2010.03.008
+
