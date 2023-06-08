@@ -1,6 +1,6 @@
 ---
 title: "ENVS-193DS_final"
-author: "Lauren Stiles"
+author: "Celine Park, Lauren Stiles"
 date: 06--2023
 format:
   html:
