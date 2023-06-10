@@ -1,5 +1,4 @@
 # ENVS-193DS_final
-# ENVS-193DS_homework-05
 Repo for ENVS 193DS take home final.
 
 ## Data 
