@@ -24,5 +24,7 @@ The code folder contains the quarto document with the code run on the EDI data s
 
 ## Methods 
 
+We analyzed the Problem 1 data using a Chi-square analysis to investigate whether kangaroo rat mounds influence seed bank composition at the study site. 
+
 
 
