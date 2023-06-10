@@ -13,19 +13,7 @@ execute:
   warning: false 
 ---
 
-# notes about what to include -- 1. Context: for example, in biological terms, what is the question? Hypothesis/hypotheses?
-What are the main results? What is your interpretation of those results?
-2. Logic: for example, how did you process the data? What steps did you go through to get
-your result? What assumptions did you check, and how? What test did you run and why?
-What tools (e.g. packages, functions) did you use?
-3. Transparency: for example, are your code and data organized?Is your code annotated and
-spaced out?Is it publicly available? Did you write an informative README?
-4. Clarity: for example, is your writing conveying your thoughts appropriately?Is your
-document clean and organized? Are sections clear?
-5. Communication: for example, are your figures and tables clear? Have you used colors,
-shapes, or other aesthetics to create a clean, visually appealing plot? Have you used the
-appropriate plot for your data set and analysis? Have you rounded/summarized numbers
-to the appropriate number of digits?
+
 #load libraries: 
 ```{r message = FALSE, warning = FALSE}
 library(tidyverse)
@@ -34,17 +22,18 @@ library(janitor)
 library(readxl)
 library(naniar)
 library(car)
+library(flextable)
 ```
 
 ## **Problem 1**
 
-# Question: How does total seed number differ between kangaroo rat mound locations?
+# Introduction 
 
-# Introduction: 3-5 citations/sentences #DO THIS 
+Small scale biotic disturbances can influence species compositions in plant communities (Bullock, 2000). In the Chihuahuan desert, kangaroo rat mounds can be classified as this type of small scale disturbance (Koontz and Simpson, 2010). Previous studies comparing landscapes containing kangaroo rat mounds have found that annual plant cover is higher on top of mounds than in surrounding areas (Davidson and Lightfoot, 2008). Though the literature outlines difference between vegetation composition, the scientific community still lacks understanding of how kangaroo rat mounds might influence seed bank composition (Koontz and Simpson, 2010). In this analysis, we aim to investigate this potential relationship. The question we want to answer is: How does total seed number differ between kangaroo rat mound locations? Our null hypothesis is that kangaroo rat mounds do not influence seed bank composition and our alternative hypothesis is that kangaroo rat mounds do influence seed bank composition. 
 
 # Methods 
-data available [here](https://portal.edirepository.org/nis/mapbrowse?packageid=knb-lter-sev.208.102459)
-We read in the data and cleaned it by selecting the columns we are interested in and renaming the locations (base of mound, edge of grass, grass interspace) for more straightforward interpretation. We chose to use an ANOVA test to compare the count sample means since this kind of test can compare means between more than two groups. We tested the null hypothesis that each of mean seed counts from the different mound locations are all the same. The alternative hypothesis is that at least one of the means is different than the other sample means. We tested the assumption that the samples have a normal distribution and equal variances. The qqplot shows that the data is mostly normal, since most of the facets represent the data as a straight line. There are deviations from normality from the data in each, especially in the base of mound group. But, ANOVA is robust even when this assumption is not met, so we decided to continue with the analysis. We used a Levene test to determine whether the data has equal variances. The null hypothesis of this test is that the variances are equal and the alternative hypothesis is that the variances are not equal. The p value from this test is <0.05, so we reject the null. It does not seem like the variances are equal. Again, since ANOVA is robust, we continued with this test.  #EDIT THIS A LOT MORE 
+
+We read in the data available [here](https://portal.edirepository.org/nis/mapbrowse?packageid=knb-lter-sev.208.102459) (Koontz, T. and H. Simpson. 2013). We cleaned the data by selecting the columns we are interested in and renaming the locations (base of mound, edge of grass, grass inter-space) for more straightforward interpretation. We then added up all of the seed counts in each category since we are comparing total counts. We chose to use a Chi-squared analysis to compare the total seed counts in each category since this kind of test is useful for analyzing count data. Our data meets each of the assumptions required to run a Chi-squared test. Our data represents counts and the samples are independent. Individual counts can only fall in one category at a time since each count corresponds to a specific sampling site. Finally, each expected value for each cell was greater than 5. We tested the null hypothesis that sampling location does not significantly affect total seed count. The alternative hypothesis is that sampling location does influence total counts. 
 
 Read in data: 
 ```{r message = FALSE, warning = FALSE}
@@ -52,62 +41,117 @@ seed_dat <- read_csv(here("data/sev208_kratseedbank_20120213.csv"))
 ```
 
 Clean data: 
-```{r}
+```{r message = FALSE, warning = FALSE}
 #create new data frame with kangaroo rat mound locations and seed numbers found 
 seed_dat_clean <- seed_dat |> 
                   #select columns of interest
-                  select(mnd, loc, seeds) |> 
+                  select(loc, seeds) |> 
                   #remove "D" from loc column becuase there is no data defintion on the EDI portal 
                   filter(loc != "D") |>
                   #rename columns 
                   mutate(loc = case_when(loc == "B" ~ "Base of mound", 
                                           loc == "E" ~ "Edge of grass", 
-                                          loc == "I" ~ "Grass interspace"))  
-```
+                                          loc == "I" ~ "Grass interspace")) |> 
+                  group_by(loc) |> 
+                  summarize(count = sum(seeds)) |> 
+                  ungroup() |> 
+                  column_to_rownames("loc")
 
-
-Check Assumptions: 
-```{r warning = FALSE, message = FALSE}
-#first, checking for missing data 
+#check for missing data 
 gg_miss_var(seed_dat_clean) #no missing data 
 
-#check for normal distribution
-ggplot(data = seed_dat_clean, aes(sample = seeds)) + 
-  #qqplot with dots 
-  stat_qq() + 
-  #add line to qqplot
-  stat_qq_line(color = "red") + 
-  #split plot into calcium-treated and reference watersheds 
-  facet_wrap(~loc) 
-#looks more or less normally distributed -- pretty linear 
-
-#check for equal variance of seed count data using a Levene test
-seed_var_test <-  leveneTest(seeds ~ loc, data = seed_dat_clean, var.equal = TRUE)
-seed_var_test
+#check how many sampling events for each location 
+seed_dat_n <- seed_dat |> 
+              select(loc, seeds) |> 
+              mutate(loc = case_when(loc == "B" ~ "Base of mound", 
+                                          loc == "E" ~ "Edge of grass", 
+                                          loc == "I" ~ "Grass interspace")) |> 
+              group_by(loc) |> 
+              count(loc)
+  
 ```
 
-Run ANOVA: 
+
+Run Chi-square Test: 
 ```{r}
-seeds_aov <- aov(seeds ~ loc, data = seed_dat_clean)
-summary(seeds_aov)
-
+seed_test <- chisq.test(seed_dat_clean)
+seed_test
 ```
+
+
+
 
 Visualization: 
 ```{r}
-
+#reorganize seed_dat_clean so location is column name 
+#rename columns 
+seed_viz_dat <- seed_dat_clean |>  
+                rownames_to_column("loc") 
+  
+#create bar graph to compare total seed counts at each location 
+seed_viz <- ggplot(data = seed_viz_dat, aes(x = loc , y = count)) +
+            geom_col(fill = "darkolivegreen4") + 
+            labs(x = "Sampling Location", 
+                 y = "Seed Count", 
+                 title = "Total Number of Seeds Collected at each Sampling Location", 
+                 caption = "Figure 1. Columns represent the total number of seeds collected.") + 
+            theme_bw() + 
+            #get rid of gap between bars and x axis 
+            scale_y_continuous(limits = c(0, 7000),  expand = c(0, 0)) +
+            #make plot look prettier
+            theme(text = element_text(family = "Times New Roman"),
+                  #change size and location of plot caption
+                  plot.caption = element_text(size = 10, hjust = 0.5), 
+                  #change size of plot title 
+                  plot.title = element_text(size = 15), 
+                  # getting rid of gridlines
+                  panel.grid = element_blank()) 
+                  #get rid of gap between bars and x axis)
+            
+seed_viz
 ```
 
-Table: 
+**Table 1: Total seed count data by sampling location** Numbers in parentheses indicate the proportion of responses (the 6932 total seeds found at the base of kangaroo rat mounds make up 78 percent of the total seeds found at all locations, n = 1170). 
 ```{r}
-
+# calculate proportions
+seed_summary <- seed_dat_clean %>% 
+#make location column from rownames 
+ rownames_to_column("Location") %>% 
+#find total number of seeds from all locations sampled and make new column 
+  mutate(sum = sum(count)) %>% 
+#ungroup to make sure that distance groups don't mess up downstream functions
+  ungroup() %>% 
+#calculate proportion of responses per living distance
+ mutate(prop = count/sum) %>% 
+#make a new column where counts and proportions are displayed together
+  mutate(text = paste0(count, " (", round(prop, digits = 2), ")")) %>% 
+#select columns of interest
+  select(Location, text) %>% 
+#making the data frame wider so that the columns are responses and rows are distance
+  pivot_wider(names_from = "Location", values_from = "text") %>% 
+#turning everything into a table ----
+  flextable() %>% 
+#changing the column names to look nicer
+  set_header_labels(distance = "Living distance",
+                    trails = "Trails",
+                    dog_access = "Dog access",
+                    wildlife_habitat = "Wildlife habitat") %>% 
+#making the table fit the viewer window
+  autofit()
+  
+seed_summary
 ```
 
-#Results -- need f statistic -- should be 31.30, right now is 18.something...
-
+# Results
+Considering count data taken from the base of kangaroo rat mounds (n = 390), at the edge of  grass mounds Bouteloua eripoda (n = 390), and in the inter-space between Bouteloua eripoda grass mounds (n = 390), total seed counts differ significantly by sampling location (Table 1. X-squared = 8106 (2), p = < 2.2e-16, alpha = 0.05). We found that a large majority of seeds were collected at the base of the kangaroo rat mounds (78 percent), while significantly fewer seeds were found at locations beyond the kangaroo rat mounds (14 percent & 7 percent). This result indicates that there are more seeds in the seed bank at the kangaroo rat mounds than in the seed bank below nearby Bouteloua eripoda grasses. We can reject the null hypothesis that sampling location has no effect on total seed count and conclude that kangaroo rat mounds have an effect on seed bank composition at this study site. 
 
 
 ## **Bibliography**
+
+Bullock, J. M. (2000) ‘Gaps and seedling colonization.’, CABI Books. CABI International. doi: 10.1079/9780851994321.0375.
+
+Davidson, & Lightfoot, D. C. (2008). Burrowing rodents increase landscape heterogeneity in a desert grassland. Journal of Arid Environments, 72(7), 1133–1145. https://doi.org/10.1016/j.jaridenv.2007.12.015
+
 Koontz, T. and H. Simpson. 2013. Effects of Kangaroo Rat Mounds on Seed Banks of Grass
 and Shrublands at the Sevilleta National Wildlife Refuge, New Mexico (2001) ver 102459.
 Environmental Data Initiative.
