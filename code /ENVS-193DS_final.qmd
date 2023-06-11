@@ -1,7 +1,7 @@
 ---
 title: "ENVS-193DS_final"
 author: "Celine Park, Lauren Stiles"
-date: 06--2023
+date: 06-2023
 format:
   html:
     toc: true
@@ -16,6 +16,7 @@ execute:
 
 #load libraries: 
 ```{r message = FALSE, warning = FALSE}
+library(MASS)
 library(tidyverse)
 library(here) 
 library(janitor) 
@@ -159,4 +160,50 @@ Environmental Data Initiative.
 Koontz and Simpson 2010, “The composition of seed banks on kangaroo rat
 (Dipodomysspectabilis) mounds in a Chihuahuan Desert grassland.” Journal of Arid Environments.
 https://doi.org/10.1016/j.jaridenv.2010.03.008
+
+## **Problem 2**
+
+load libraries
+```{r}
+library(lme4)
+library(glmmTBi)
+library(DHARMa)
+library(ggeffects)
+library(lmtest)
+library(broom)
+```
+
+
+Read in data: 
+```{r}
+seedcount <-read_csv(here("data/knb-lter-nwt.297.1/seedcount.csv")) |> #reading in data 
+            clean_names() |> #adjusting column names to lowercase 
+            select("nr_seeds", "total_nr_infl", "plant_nr", 
+                   "tag_num") #selecting specific needed columns
+
+```
+
+Visualizing missing data:
+```{r}
+gg_miss_var(seedcount)
+```
+Building models
+```{r}
+#linear model, this is wrong
+seedcount1 <- lm(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount)
+
+# general linear model with Poisson distribution
+seedcount2 <- glm(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount, family = "poisson")
+seedcoun2.a <- glm(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount, family = "poisson")
+
+# general linear model with negative binomial distribution
+seedcount3 <- glm.nb(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount)
+seedcount3.a <- glmmTB(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount, family = "nbinom2")
+
+```
+Look at residuals
+```{r}
+plot(simulateResiduals(seedcount1))
+```
+
 
