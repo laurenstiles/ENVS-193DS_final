@@ -166,20 +166,20 @@ https://doi.org/10.1016/j.jaridenv.2010.03.008
 load libraries
 ```{r}
 library(lme4)
-library(glmmTBi)
+# library(glmmTB) #not available 
 library(DHARMa)
 library(ggeffects)
 library(lmtest)
 library(broom)
+library(MuMIn)
 ```
 
 
 Read in data: 
 ```{r}
 seedcount <-read_csv(here("data/knb-lter-nwt.297.1/seedcount.csv")) |> #reading in data 
-            clean_names() |> #adjusting column names to lowercase 
-            select("nr_seeds", "total_nr_infl", "plant_nr", 
-                   "tag_num") #selecting specific needed columns
+            clean_names()  #adjusting column names to lowercase 
+           
 
 ```
 
@@ -198,12 +198,60 @@ seedcoun2.a <- glm(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcou
 
 # general linear model with negative binomial distribution
 seedcount3 <- glm.nb(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount)
-seedcount3.a <- glmmTB(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount, family = "nbinom2")
+#seedcount3.a <- glmmTB(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount, family = "nbinom2") don't have packages
+
+#generalized linear model with Poisson distribution and random effect of site
+seedcount4 <- glmer(nr_seeds ~ total_nr_infl + plant_nr + tag_num + (1|shrub_num), data = seedcount, family = "poisson")
+
+#generalized linear model with negative binomial distribution and random effect of site
+seedcount5 <- glmer.nb(nr_seeds ~ total_nr_infl + plant_nr + tag_num + (1|shrub_num), data = seedcount)
+
+
 
 ```
-Look at residuals
+
+
+Selecting the distribution to use
+
 ```{r}
-plot(simulateResiduals(seedcount1))
+MuMIn::model.sel(seedcount1, seedcount2, seedcount3, seedcount4, seedcount5)
+```
+Model Summary
+```{r}
+seedcount3
 ```
 
+```{r}
+summary(seedcount3)
+```
+```{r}
+confint(seedcount3)
+```
+
+```{r}
+r.squaredGLMM(seedcount3)
+```
+
+```{r}
+seedcount3 |>
+  as_flextable()
+```
+
+Visualizing:
+```{r}
+predictions <- ggpredict(seedcount3, terms = c("total_nr_infl", "plant_nr", "tag_num")) %>% 
+  rename(total_nr_infl = group,
+        plant_nr = facet)
+
+ggplot(seed_count, aes(x = cover, y = nr_seeds, fill = mined)) +
+  geom_point(aes(color = mined), alpha = 0.5) +
+  facet_wrap(~spp, scales = "free_y") +
+  geom_line(data = predictions, aes(x = x, y = predicted, color = mined)) +
+  geom_ribbon(data = predictions, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high, fill = mined), alpha = 0.2) +
+  scale_fill_manual(values = c("yes" = "blue", "no" = "orange")) +
+  scale_color_manual(values = c("yes" = "blue", "no" = "orange")) +
+  theme_bw() +
+  facet_wrap(~spp, scales = "free_y") +
+  labs(fill = "Mined", color = "Mined")
+```
 
