@@ -218,40 +218,40 @@ MuMIn::model.sel(seedcount1, seedcount2, seedcount3, seedcount4, seedcount5)
 ```
 Model Summary
 ```{r}
-seedcount3
+seedcount2
 ```
 
 ```{r}
-summary(seedcount3)
+summary(seedcount2)
 ```
 ```{r}
-confint(seedcount3)
-```
-
-```{r}
-r.squaredGLMM(seedcount3)
+confint(seedcount2)
 ```
 
 ```{r}
-seedcount3 |>
+r.squaredGLMM(seedcount2)
+```
+
+```{r}
+seedcount2 |>
   as_flextable()
 ```
 
 Visualizing:
 ```{r}
-predictions <- ggpredict(seedcount3, terms = c("total_nr_infl", "plant_nr", "tag_num")) %>% 
+predictions <- ggpredict(seedcount2, terms = c("total_nr_infl", "plant_nr", "tag_num")) %>% 
   rename(total_nr_infl = group,
         plant_nr = facet)
 
-ggplot(seed_count, aes(x = cover, y = nr_seeds, fill = mined)) +
-  geom_point(aes(color = mined), alpha = 0.5) +
-  facet_wrap(~spp, scales = "free_y") +
-  geom_line(data = predictions, aes(x = x, y = predicted, color = mined)) +
-  geom_ribbon(data = predictions, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high, fill = mined), alpha = 0.2) +
+ggplot(seedcount, aes(x = total_nr_infl, y = plant_nr, fill = plant_nr)) +
+  geom_point(aes(color = plant_nr), alpha = 0.5) +
+  facet_wrap(~tag_num, scales = "free_y") +
+  geom_line(data = predictions, aes(x = x, y = predicted, color = plant_nr)) +
+  geom_ribbon(data = predictions, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high, fill = plant_nr), alpha = 0.2) +
   scale_fill_manual(values = c("yes" = "blue", "no" = "orange")) +
   scale_color_manual(values = c("yes" = "blue", "no" = "orange")) +
   theme_bw() +
-  facet_wrap(~spp, scales = "free_y") +
-  labs(fill = "Mined", color = "Mined")
+  facet_wrap(~tag_num, scales = "free_y") +
+  labs(fill = "plant_nr", color = "plant_nr")
 ```
 
