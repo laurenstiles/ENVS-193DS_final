@@ -163,6 +163,8 @@ https://doi.org/10.1016/j.jaridenv.2010.03.008
 
 ## **Problem 2**
 
+Introduction:
+
 load libraries
 ```{r}
 library(lme4)
@@ -174,7 +176,12 @@ library(broom)
 library(MuMIn)
 ```
 
+# Introduction
+Seed count can vary with plot type(shrub or open), plant species, or total number of inflorescence. Due to climate-change induced alterations, conditions in the alpine tundra have led to the expansion of woody shrubs known as "shrubification".Shrubs are known to rapidly encroach on herbaceous plant communities in the tundra all over the world (Smith, 2011). Additionally, seed count varies with plant species and the total number of inflorescence. The "vigour" of seeds describes the sum total of their properties that establish seedlings to adapt based on a wide variety of factors (Mitchell, 2017) Knowing the variability within seeds across scales can help plants to adapt to climate change and elevated CO2, along with providing a path for enhancing crops (Mitchell, 2016).
 
+# Methods
+We cleaned the data by cleaning up the column names, but kept all the columns so as to help with the ggplot later on. We then created a graph with the missing variables, and chose to use a generalized linear model as our source of comparing the predictor variables to the total number of seeds. We then created multiple models to compare the seed count to the plot type, plant species, and total number of inflorescences. We determined which model to use by comparing AICc values, and visualized the data through a ggplot. 
+ 
 Read in data: 
 ```{r}
 seedcount <-read_csv(here("data/knb-lter-nwt.297.1/seedcount.csv")) |> #reading in data 
@@ -190,21 +197,21 @@ gg_miss_var(seedcount)
 Building models
 ```{r}
 #linear model, this is wrong
-seedcount1 <- lm(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount)
+seedcount1 <- lm(nr_seeds ~ total_nr_infl + species + treatment, data = seedcount)
 
 # general linear model with Poisson distribution
-seedcount2 <- glm(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount, family = "poisson")
-seedcoun2.a <- glm(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount, family = "poisson")
+seedcount2 <- glm(nr_seeds ~ total_nr_infl + species + treatment, data = seedcount, family = "poisson")
+seedcoun2.a <- glm(nr_seeds ~ total_nr_infl + species + treatment, data = seedcount, family = "poisson")
 
 # general linear model with negative binomial distribution
-seedcount3 <- glm.nb(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount)
+seedcount3 <- glm.nb(nr_seeds ~ total_nr_infl + species + treatment, data = seedcount)
 #seedcount3.a <- glmmTB(nr_seeds ~ total_nr_infl + plant_nr + tag_num, data = seedcount, family = "nbinom2") don't have packages
 
 #generalized linear model with Poisson distribution and random effect of site
-seedcount4 <- glmer(nr_seeds ~ total_nr_infl + plant_nr + tag_num + (1|shrub_num), data = seedcount, family = "poisson")
+seedcount4 <- glmer(nr_seeds ~ total_nr_infl + species + treatment + (1|shrub_num), data = seedcount, family = "poisson")
 
 #generalized linear model with negative binomial distribution and random effect of site
-seedcount5 <- glmer.nb(nr_seeds ~ total_nr_infl + plant_nr + tag_num + (1|shrub_num), data = seedcount)
+seedcount5 <- glmer.nb(nr_seeds ~ total_nr_infl + species + treatment + (1|shrub_num), data = seedcount)
 
 
 
@@ -218,40 +225,62 @@ MuMIn::model.sel(seedcount1, seedcount2, seedcount3, seedcount4, seedcount5)
 ```
 Model Summary
 ```{r}
-seedcount2
+seedcount2 #calling seedcount2
 ```
 
 ```{r}
-summary(seedcount2)
+summary(seedcount2) #creating a summary of the model
 ```
 ```{r}
-confint(seedcount2)
+confint(seedcount2) #creating a confindence interval
 ```
 
 ```{r}
 r.squaredGLMM(seedcount2)
 ```
-
+**Table 1: Test statistics for predictor variables against total seed numbers**. This table holds all the relevant information for the statistics of the predictor variables. The P-values are all less than .001, showing that the data is statistically significant, with the estimate, standard error, and statistic of each predictor variable are also shown. 
 ```{r}
-seedcount2 |>
-  as_flextable()
+model_squares_table <- tidy(seedcount2) %>%  #creating a flextable
+  mutate(p.value = case_when(
+    p.value < 0.001 ~ "< 0.001" #creating labels for the p-values
+  )) %>% 
+  flextable() %>% 
+  set_header_labels(statistic = "Statistic", #adjusting the titles of the columns
+                    p.value = "P-Value",
+                    std.error = "Standard Error",
+                    estimate = "Estimate",
+                    term = "Term")
+
+model_squares_table
 ```
 
 Visualizing:
 ```{r}
-predictions <- ggpredict(seedcount2, terms = c("total_nr_infl", "plant_nr", "tag_num")) %>% 
-  rename(total_nr_infl = group,
-        plant_nr = facet)
+predictions <- ggpredict(seedcount2, terms = c("total_nr_infl", "species", "treatment"))  #creating predictors variable
+  
 
-ggplot(seedcount, aes(x = total_nr_infl, y = plant_nr, fill = plant_nr)) +
-  geom_point(aes(color = plant_nr), alpha = 0.5) +
-  facet_wrap(~tag_num, scales = "free_y") +
-  geom_line(data = predictions, aes(x = x, y = predicted, color = plant_nr)) +
-  geom_ribbon(data = predictions, aes(x = x, y = predicted, ymin = conf.low, ymax = conf.high, fill = plant_nr), alpha = 0.2) +
-  scale_fill_manual(values = c("yes" = "blue", "no" = "orange")) +
-  scale_color_manual(values = c("yes" = "blue", "no" = "orange")) +
-  theme_bw() +
-  facet_wrap(~tag_num, scales = "free_y") +
-  labs(fill = "plant_nr", color = "plant_nr")
+
+
+
+ggplot(seedcount, aes(x = total_nr_infl, y = nr_seeds)) + #putting total flowers as x-value, and total number of seeds as y
+  geom_point(aes(color = species), alpha = 0.5) + #creating the species as points
+  facet_wrap(~treatment, scales = "free_y") + #adding the two types of shrubs
+  labs(caption = "Figure 1: Predictor Variables mapped against the total number of seeds",
+       y = "Total Number of Seeds",
+       x = "Total Number of Inflorescence Flowers") + #adding captions
+  theme_bw() #adjusting theme
+  
+
+
+
+
 ```
+#Results
+After creating a Poisson regression with three predictor variables: plant species, open and closed shrub, and total number of inflorescence species, it was determined that the total number of inflorescence species has a significant impact on seed count (z-value = 44.927, and p-value < 0.001), with an estimated coefficient of 0.030 (degrees of freedom = 181). The different species of plants (Carrup, Geuros, Minobt, Tridas) were all shown to have a significant effect on seed count (with all the p-values either being less than .001). Additionally, the treatment predictor variable was also shown to be statistically significant with an estimated coefficient of -0.172, and a p-value of less than .001. Thus, we can reject the null hypothesis that seed count does not have an effect on plant species, open and closed shrubs, and the total number of inflorescence species.
+
+
+
+
+
+
 
