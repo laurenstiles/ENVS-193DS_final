@@ -180,7 +180,7 @@ library(MuMIn)
 Seed count can vary with plot type(shrub or open), plant species, or total number of inflorescence. Due to climate-change induced alterations, conditions in the alpine tundra have led to the expansion of woody shrubs known as "shrubification".Shrubs are known to rapidly encroach on herbaceous plant communities in the tundra all over the world (Smith, 2011). Additionally, seed count varies with plant species and the total number of inflorescence. The "vigour" of seeds describes the sum total of their properties that establish seedlings to adapt based on a wide variety of factors (Mitchell, 2017) Knowing the variability within seeds across scales can help plants to adapt to climate change and elevated CO2, along with providing a path for enhancing crops (Mitchell, 2016).
 
 # Methods
-We cleaned the data by cleaning up the column names, but kept all the columns so as to help with the ggplot later on. We then created a graph with the missing variables, and chose to use a generalized linear model as our source of comparing the predictor variables to the total number of seeds. We then created multiple models to compare the seed count to the plot type, plant species, and total number of inflorescences. We determined which model to use by comparing AICc values, and visualized the data through a ggplot. 
+We cleaned the data by cleaning up the column names, but kept all the columns so as to help with the ggplot later on. We then created a graph with the missing variables, and chose to use a generalized linear model as our source of comparing the predictor variables to the total number of seeds. We then created multiple models to compare the seed count to the plot type, plant species, and total number of inflorescences. We determined which model to use by comparing AICc values, and visualized the data through a ggplot. The null hypothesis is that seed count does not vary with plot type (shrub or open), plant species, and total number of inflorescence, while the alternate hypothesis is that seed count does vary with plot type, plants species, or total number of inflorescence. 
  
 Read in data: 
 ```{r}
@@ -275,8 +275,16 @@ ggplot(seedcount, aes(x = total_nr_infl, y = nr_seeds)) + #putting total flowers
 
 
 ```
-#Results
-After creating a Poisson regression with three predictor variables: plant species, open and closed shrub, and total number of inflorescence species, it was determined that the total number of inflorescence species has a significant impact on seed count (z-value = 44.927, and p-value < 0.001), with an estimated coefficient of 0.030 (degrees of freedom = 181). The different species of plants (Carrup, Geuros, Minobt, Tridas) were all shown to have a significant effect on seed count (with all the p-values either being less than .001). Additionally, the treatment predictor variable was also shown to be statistically significant with an estimated coefficient of -0.172, and a p-value of less than .001. Thus, we can reject the null hypothesis that seed count does not have an effect on plant species, open and closed shrubs, and the total number of inflorescence species.
+# Results
+After creating a Poisson regression with three predictor variables: plant species, open and closed shrub, and total number of inflorescence species, it was determined that the total number of inflorescence species has a significant impact on seed count (z-value = 44.927, and p-value < 0.001), with an estimated coefficient of 0.030 (degrees of freedom = 181). The different species of plants (Carrup, Geuros, Minobt, Tridas) were all shown to have a significant effect on seed count (with all the p-values either being less than .001). Additionally, the treatment predictor variable was also shown to be statistically significant with an estimated coefficient of -0.172, and a p-value of less than .001. Thus, we can reject the null hypothesis that seed count does not have an effect on plant species, open and closed shrubs, and the total number of inflorescence species. A simpler model that could explain seed count would be through the use of the anova table, which can summarize the analysis of variance and the p-values with each predictor variable. 
+
+# Bibliography
+
+Jack Mitchell and others, Variability in seeds: biological, ecological, and agricultural implications, Journal of Experimental Botany, Volume 68, Issue 4, 1 February 2017, Pages 809–817, https://doi.org/10.1093/jxb/erw397
+
+ Isla H Myers-Smith et al 2011 Environ. Res. Lett. 6 045509
+ 
+Mitchell J, Johnston IG, Bassel GW. Variability in seeds: biological, ecological, and agricultural implications. J Exp Bot. 2017 Feb 1;68(4):809-817. doi: 10.1093/jxb/erw397. PMID: 27784726. 
 
 
 
