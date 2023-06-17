@@ -1,7 +1,7 @@
 ---
 title: "ENVS-193DS_final"
 author: "Celine Park, Lauren Stiles"
-date: 06-2023
+date: 06-16-2023
 format:
   html:
     toc: true
@@ -14,7 +14,7 @@ execute:
 ---
 
 
-#load libraries: 
+load libraries: 
 ```{r message = FALSE, warning = FALSE}
 library(MASS)
 library(tidyverse)
@@ -282,7 +282,7 @@ After creating a Poisson regression with three predictor variables: plant specie
 
 Jack Mitchell and others, Variability in seeds: biological, ecological, and agricultural implications, Journal of Experimental Botany, Volume 68, Issue 4, 1 February 2017, Pages 809–817, https://doi.org/10.1093/jxb/erw397
 
- Isla H Myers-Smith et al 2011 Environ. Res. Lett. 6 045509
+Isla H Myers-Smith et al 2011 Environ. Res. Lett. 6 045509
  
 Mitchell J, Johnston IG, Bassel GW. Variability in seeds: biological, ecological, and agricultural implications. J Exp Bot. 2017 Feb 1;68(4):809-817. doi: 10.1093/jxb/erw397. PMID: 27784726. 
 
